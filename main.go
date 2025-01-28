@@ -1,0 +1,130 @@
+package main
+
+import (
+	"context"
+	"encoding/base64"
+	"fmt"
+	"net/http"
+	"os"
+
+	"gopkg.in/yaml.v3"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
+
+	"github.com/sirupsen/logrus"
+
+	kwhhttp "github.com/slok/kubewebhook/v2/pkg/http"
+	kwhlogrus "github.com/slok/kubewebhook/v2/pkg/log/logrus"
+	kwhmodel "github.com/slok/kubewebhook/v2/pkg/model"
+	kwhmutating "github.com/slok/kubewebhook/v2/pkg/webhook/mutating"
+)
+
+func injectCertInMWC() {
+	logrusLogEntry := logrus.NewEntry(logrus.New())
+	logrusLogEntry.Logger.SetLevel(logrus.DebugLevel)
+	logger := kwhlogrus.NewLogrus(logrusLogEntry)
+
+	// creates the in-cluster config
+
+	certFile := os.Getenv("TLS_CERT_FILE")
+
+	logger.Infof("imageshift-init injecting certificate into MutatingWebhookConfiguration imageshift-webhook.")
+
+	crt, err := os.ReadFile(certFile)
+	if err != nil {
+		panic(err)
+	}
+
+	certEnc := base64.StdEncoding.EncodeToString([]byte(crt))
+	fmt.Println(certEnc)
+
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		panic(err)
+	}
+	// creates the clientset
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		panic(err)
+	}
+
+	mwc, err := clientset.AdmissionregistrationV1().MutatingWebhookConfigurations().Get(context.TODO(), "imageshift-webhook", metav1.GetOptions{})
+	if err != nil {
+		panic(err)
+	}
+
+	for i := range mwc.Webhooks {
+		fmt.Println(i)
+		mwc.Webhooks[i].ClientConfig.CABundle = []byte(crt)
+	}
+
+	_, err = clientset.AdmissionregistrationV1().MutatingWebhookConfigurations().Update(context.TODO(), mwc, metav1.UpdateOptions{})
+	if err != nil {
+		panic(err)
+	}
+	logger.Infof("imageshift-init finished.")
+}
+
+func startWebhook() {
+	logrusLogEntry := logrus.NewEntry(logrus.New())
+	logrusLogEntry.Logger.SetLevel(logrus.DebugLevel)
+	logger := kwhlogrus.NewLogrus(logrusLogEntry)
+
+	cfg := initEnv()
+
+	imageSwapCfg := initConfig()
+
+	cfgStr, _ := yaml.Marshal(imageSwapCfg)
+	logger.Infof("MutatingWebhook Configuration\n%s", string(cfgStr))
+
+	// Create our mutator
+
+	mt := kwhmutating.MutatorFunc(func(ctx context.Context, ar *kwhmodel.AdmissionReview, obj metav1.Object) (*kwhmutating.MutatorResult, error) {
+		return swapPodMutator(imageSwapCfg, ctx, ar, obj, logger)
+	})
+
+	mcfg := kwhmutating.WebhookConfig{
+		ID:      "podAnnotate",
+		Obj:     &corev1.Pod{},
+		Mutator: mt,
+		Logger:  logger,
+	}
+	wh, err := kwhmutating.NewWebhook(mcfg)
+	if err != nil {
+		logger.Errorf("error creating webhook: %s", err)
+		os.Exit(1)
+	}
+
+	// Get the handler for our webhook.
+	whHandler, err := kwhhttp.HandlerFor(kwhhttp.HandlerConfig{Webhook: wh, Logger: logger})
+	if err != nil {
+		logger.Errorf("error creating webhook handler: %s", err)
+	}
+	logger.Infof("Webhook Listening on :8080")
+	err = http.ListenAndServeTLS(":8080", cfg.certFile, cfg.keyFile, whHandler)
+	if err != nil {
+		logger.Errorf("error serving webhook: %s", err)
+	}
+}
+
+func main() {
+	if len(os.Args) < 2 {
+		fmt.Println("No arguments provided.")
+		return
+	}
+
+	// checking for app [init | webhook]
+	// init mode injects certificate into the mutating webhook
+	// webhook mode starts standarad webhook process
+
+	// better way to do this? trying to minimalize dependcies.
+
+	switch os.Args[1] {
+	case "init":
+		injectCertInMWC()
+	case "webhook":
+		startWebhook()
+	}
+}

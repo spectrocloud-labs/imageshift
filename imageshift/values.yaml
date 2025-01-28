@@ -1,0 +1,27 @@
+# Default values for imageshift.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+config: |-
+  imageswap:
+    default: registry.localhost.io:8080
+
+    mappings:
+      swap:
+      - registry: gcr.io
+        target: registry.localhost.io:8080
+
+image:
+  repository: wcrum/imageshift
+  # This sets the pull policy for images.
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "latest"
+
+namespace: "imageshift"
+
+
+# Option to specify an existing TLS secret for the certificate
+tls:
+  selfSigned: true # required certmanager
+  secretName: imageshift-tls
