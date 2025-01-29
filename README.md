@@ -1,6 +1,6 @@
 # ImageShift Webhook
 
-![meme](./public/imageswap-meme.jpg)
+![meme](./public/imageswap-meme.png)
 
 [![Docker Image Size](https://badgen.net/docker/size/wcrum/imageshift/latest/arm64?icon=docker&label=Image%20Size)](https://hub.docker.com/r/wcrum/webhook/)
 
