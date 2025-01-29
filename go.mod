@@ -1,4 +1,4 @@
-module github.com/wcrum/imageswap-v2
+module github.com/spectrocloud-labs/imageshift
 
 go 1.23.2
 

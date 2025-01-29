@@ -98,6 +98,18 @@ func TestImageSwap_SwapImage(t *testing.T) {
 				{input: "gcr.io/testing/testing:latest", want: "registry.testing.com/abc/abc:test"},
 			},
 		},
+		{
+			name: "default registry",
+			fields: fields{
+				Default: "registry.testing.com",
+			},
+			images: []struct {
+				input string
+				want  string
+			}{
+				{input: "library/image:latest", want: "registry.testing.com/library/image:latest"},
+			},
+		},
 	}
 
 	for _, tt := range tests {
