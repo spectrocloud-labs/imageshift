@@ -74,7 +74,7 @@ func startWebhook() {
 
 	cfg := initEnv()
 
-	imageSwapCfg := initConfig()
+	imageSwapCfg := initConfig("/etc/imageswap-configmap/imageswap.yaml")
 
 	cfgStr, _ := yaml.Marshal(imageSwapCfg)
 	logger.Infof("MutatingWebhook Configuration\n%s", string(cfgStr))

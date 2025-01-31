@@ -27,12 +27,11 @@ func initEnv() *config {
 	return cfg
 }
 
-func initConfig() *ImageSwapConfig {
+func initConfig(path string) *ImageSwapConfig {
 	// default location will be /etc/imageswap-config/imageswap.yaml
-	imageSwapFilePath := "/etc/imageswap-configmap/imageswap.yaml"
 	cfg := &ImageSwapConfig{}
 
-	content, err := os.ReadFile(imageSwapFilePath)
+	content, err := os.ReadFile(path)
 	if err != nil {
 	}
 

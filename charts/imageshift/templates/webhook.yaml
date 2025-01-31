@@ -15,6 +15,7 @@ spec:
       labels:
         app: imageshift-webhook
     spec:
+      priorityClass: imageshift-cluster-critical
       serviceAccountName: imageshift-init-sa
       initContainers:
         - name: imageshift-init
