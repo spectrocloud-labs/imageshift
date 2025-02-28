@@ -87,7 +87,7 @@ func (i *Imageshift) SwapImage(image string) string {
 	// if registry == default registry return image
 	var newImage string
 
-	if string(registry) == i.Spec.Default {
+	if registry == i.Spec.Default {
 		newImage = ref.Name()
 	}
 
