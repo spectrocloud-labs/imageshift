@@ -4,9 +4,6 @@ kind: ClusterRole
 metadata:
   name: manager-role
 rules:
-- apiGroups: [""]
-  resources: ["pods"]
-  verbs: ["get", "list", "watch"]
 - apiGroups:
   - imageshift.dev
   resources:
@@ -33,3 +30,6 @@ rules:
   - get
   - patch
   - update
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list", "watch"]
