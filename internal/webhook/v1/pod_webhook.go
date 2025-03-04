@@ -28,6 +28,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+
+	swap "github.com/spectrocloud-labs/imageshift/pkg/swap"
 )
 
 // nolint:unused
@@ -92,7 +94,7 @@ func (d *PodCustomDefaulter) Default(ctx context.Context, obj runtime.Object) er
 	mapping := resources.Items[0]
 
 	for i, container := range pod.Spec.Containers {
-		img := mapping.SwapImage(container.Image)
+		img := swap.SwapImage(mapping, container.Image)
 
 		if img != "" {
 			pod.Spec.Containers[i].Image = img
@@ -101,7 +103,7 @@ func (d *PodCustomDefaulter) Default(ctx context.Context, obj runtime.Object) er
 	}
 
 	for i, container := range pod.Spec.InitContainers {
-		img := mapping.SwapImage(container.Image)
+		img := swap.SwapImage(mapping, container.Image)
 
 		if img != "" {
 			pod.Spec.InitContainers[i].Image = img

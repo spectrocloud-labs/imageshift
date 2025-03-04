@@ -2,12 +2,12 @@
 # This file is used to track the info used to scaffold your project
 # and allow the plugins properly work.
 # More info: https://book.kubebuilder.io/reference/project-config.html
-domain: spectrocloud-labs.github.com
+domain: imageshift.dev
 layout:
 - go.kubebuilder.io/v4
 plugins:
   helm.kubebuilder.io/v1-alpha: {}
-projectName: imageshift-v2
+projectName: imageshift
 repo: github.com/spectrocloud-labs/imageshift
 resources:
 - core: true
@@ -21,7 +21,8 @@ resources:
 - api:
     crdVersion: v1
     namespaced: true
-  domain: spectrocloud-labs.github.com
+  controller: true
+  domain: imageshift.dev
   kind: Imageshift
   path: github.com/spectrocloud-labs/imageshift/api/v1
   version: v1

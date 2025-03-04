@@ -16,7 +16,7 @@ limitations under the License.
 
 // Package v1 contains API Schema definitions for the  v1 API group.
 // +kubebuilder:object:generate=true
-// +groupName=spectrocloud-labs.github.com
+// +groupName=imageshift.dev
 package v1
 
 import (
@@ -25,8 +25,10 @@ import (
 )
 
 var (
+	// move to spectrocloud-labs.com and v1alpha1
+	//
 	// GroupVersion is group version used to register these objects.
-	GroupVersion = schema.GroupVersion{Group: "spectrocloud-labs.github.com", Version: "v1"}
+	GroupVersion = schema.GroupVersion{Group: "imageshift.dev", Version: "v1alpha1"}
 
 	// SchemeBuilder is used to add go types to the GroupVersionKind scheme.
 	SchemeBuilder = &scheme.Builder{GroupVersion: GroupVersion}

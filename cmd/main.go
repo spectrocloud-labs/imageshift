@@ -38,6 +38,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	imageshiftv1 "github.com/spectrocloud-labs/imageshift/api/v1"
+	spectrocloudlabsgithubcomv1 "github.com/spectrocloud-labs/imageshift/api/v1"
+	"github.com/spectrocloud-labs/imageshift/internal/controller"
 	imageshiftwebhookv1 "github.com/spectrocloud-labs/imageshift/internal/webhook/v1"
 	// +kubebuilder:scaffold:imports
 )
@@ -51,6 +53,7 @@ func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
 	utilruntime.Must(imageshiftv1.AddToScheme(scheme))
+	utilruntime.Must(spectrocloudlabsgithubcomv1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
 }
 
@@ -208,6 +211,13 @@ func main() {
 			setupLog.Error(err, "unable to create webhook", "webhook", "Imageshift")
 			os.Exit(1)
 		}
+	}
+	if err = (&controller.ImageshiftReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Imageshift")
+		os.Exit(1)
 	}
 	// +kubebuilder:scaffold:builder
 
