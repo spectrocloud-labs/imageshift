@@ -18,13 +18,17 @@ package controller
 
 import (
 	"context"
+	"fmt"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	spectrocloudlabsgithubcomv1 "github.com/spectrocloud-labs/imageshift/api/v1"
+	imageshiftv1 "github.com/spectrocloud-labs/imageshift/api/v1"
+	"github.com/spectrocloud-labs/imageshift/pkg/swap"
+	"github.com/spectrocloud/gomi/pkg/logger"
+	corev1 "k8s.io/api/core/v1"
 )
 
 // ImageshiftReconciler reconciles a Imageshift object
@@ -49,7 +53,60 @@ type ImageshiftReconciler struct {
 func (r *ImageshiftReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = log.FromContext(ctx)
 
-	// TODO(user): your logic here
+	var namespaceList corev1.NamespaceList
+
+	_ = imageshiftv1.AddToScheme(r.Scheme)
+
+	resources := &imageshiftv1.ImageshiftList{}
+	if err := r.Client.List(ctx, resources, &client.ListOptions{}); err != nil {
+		return ctrl.Result{}, fmt.Errorf("failed to list Imageshift resources: %v", err)
+	}
+
+	if len(resources.Items) > 1 {
+		return ctrl.Result{}, fmt.Errorf("could not determine which Imageshift Config to use")
+	}
+
+	config := resources.Items[0]
+
+	if err := r.Client.List(ctx, &namespaceList); err != nil {
+		log.Error(err, "Failed to list namespaces")
+		return ctrl.Result{}, err
+	}
+
+	// Define the annotation key you want to check
+	annotationKey := "imageshift.dev"
+
+	for _, ns := range namespaceList.Items {
+		if val, exists := ns.Annotations[annotationKey]; exists {
+
+			var podList corev1.PodList
+			if err := r.Client.List(ctx, &podList, client.InNamespace(ns.Namespace)); err != nil {
+				logger.Error(err, "Failed to list pods in namespace", "namespace", ns.Name)
+				continue
+			}
+
+			for _, pod := range podList.Items {
+				shouldDelete := false
+
+				for _, container := range pod.Spec.Containers {
+					if swapContainer := swap.SwapImage(config, container.Image); container.Image != swapContainer {
+						shouldDelete = true
+					}
+				}
+				for _, container := range pod.Spec.InitContainers {
+					if swapContainer := swap.SwapImage(config, container.Image); container.Image != swapContainer {
+						shouldDelete = true
+					}
+				}
+
+				if shouldDelete {
+					r.Client.Delete(ctx, &pod, &client.DeleteOptions{})
+				}
+			}
+
+			logger.Info("Namespace has the required annotation", "namespace", ns.Name, "annotationValue", val)
+		}
+	}
 
 	return ctrl.Result{}, nil
 }
@@ -57,7 +114,7 @@ func (r *ImageshiftReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 // SetupWithManager sets up the controller with the Manager.
 func (r *ImageshiftReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&spectrocloudlabsgithubcomv1.Imageshift{}).
+		For(&imageshiftv1.Imageshift{}).
 		Named("imageshift").
 		Complete(r)
 }

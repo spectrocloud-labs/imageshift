@@ -93,11 +93,19 @@ func (d *PodCustomDefaulter) Default(ctx context.Context, obj runtime.Object) er
 
 	mapping := resources.Items[0]
 
+	hasChanged := false
+
 	for i, container := range pod.Spec.Containers {
 		img := swap.SwapImage(mapping, container.Image)
 
 		if img != "" {
+			hasChanged = true
+
+			annotation := fmt.Sprintf("%s.container.imageshift.dev/original", pod.Spec.Containers[i].Name)
+			pod.Annotations[annotation] = pod.Spec.Containers[i].Image
+
 			pod.Spec.Containers[i].Image = img
+
 			podlog.Info("Patched Container", "pod", container.Name, "reference", img)
 		}
 	}
@@ -106,9 +114,16 @@ func (d *PodCustomDefaulter) Default(ctx context.Context, obj runtime.Object) er
 		img := swap.SwapImage(mapping, container.Image)
 
 		if img != "" {
+			hasChanged = true
+			annotation := fmt.Sprintf("%s.initContainer.imageshift.dev/original", pod.Spec.Containers[i].Name)
+			pod.Annotations[annotation] = pod.Spec.Containers[i].Image
 			pod.Spec.InitContainers[i].Image = img
 			podlog.Info("Patched initContainer", "pod", container.Name, "reference", img)
 		}
+	}
+
+	if hasChanged {
+		pod.Labels["imageshift.dev/mutated"] = "true"
 	}
 
 	return nil
