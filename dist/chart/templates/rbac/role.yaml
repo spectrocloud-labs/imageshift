@@ -9,7 +9,7 @@ rules:
 - apiGroups: [""]
   resources: ["pods"]
   verbs: ["get", "list", "watch"]
-- apiGroups: ["spectrocloud-labs.github.com"]
+- apiGroups: ["imageshift.dev"]
   resources: ["imageshifts"]
   verbs: ["get", "list", "watch"]
 {{- end -}}

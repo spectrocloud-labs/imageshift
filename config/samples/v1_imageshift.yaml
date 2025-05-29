@@ -1,4 +1,4 @@
-apiVersion: spectrocloud-labs.github.com/v1
+apiVersion: imageshift.dev/v1
 kind: Imageshift
 metadata:
   labels:
@@ -6,4 +6,7 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
   name: imageshift-sample
 spec:
-  # TODO(user): Add fields here
+  mappings:
+    exactSwap:
+      - reference: asdasdbusybox
+        target: busybox

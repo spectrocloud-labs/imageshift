@@ -25,10 +25,10 @@ import (
 )
 
 var (
-	// move to spectrocloud-labs.com and v1alpha1
+	// move to imageshift.dev and v1
 	//
 	// GroupVersion is group version used to register these objects.
-	GroupVersion = schema.GroupVersion{Group: "imageshift.dev", Version: "v1alpha1"}
+	GroupVersion = schema.GroupVersion{Group: "imageshift.dev", Version: "v1"}
 
 	// SchemeBuilder is used to add go types to the GroupVersionKind scheme.
 	SchemeBuilder = &scheme.Builder{GroupVersion: GroupVersion}

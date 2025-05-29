@@ -23,6 +23,7 @@ import (
 	imageshiftv1 "github.com/spectrocloud-labs/imageshift/api/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -45,7 +46,7 @@ func SetupPodWebhookWithManager(mgr ctrl.Manager) error {
 
 // TODO(user): EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 
-// +kubebuilder:webhook:path=/mutate--v1-pod,mutating=true,failurePolicy=ignore,sideEffects=None,groups="",resources=pods,verbs=create;update,versions=v1,name=mpod-v1.kb.io,admissionReviewVersions=v1
+// +kubebuilder:webhook:path=/mutate--v1-pod,mutating=true,failurePolicy=ignore,sideEffects=None,groups="",resources=pods,verbs=create,versions=v1,name=webhook.imageshift.dev,admissionReviewVersions=v1
 
 // PodCustomDefaulter struct is responsible for setting default values on the custom resource of the
 // Kind Pod when those are created or updated.
@@ -61,10 +62,11 @@ var _ webhook.CustomDefaulter = &PodCustomDefaulter{}
 // Default implements webhook.CustomDefaulter so a webhook will be registered for the Kind Pod.
 func (d *PodCustomDefaulter) Default(ctx context.Context, obj runtime.Object) error {
 	pod, ok := obj.(*corev1.Pod)
-
 	if !ok {
 		return fmt.Errorf("expected an Pod object but got %T", obj)
 	}
+
+	fmt.Println(pod.Generation)
 	podlog.Info("Defaulting for Pod", "name", pod.GetName())
 
 	// read only one imageshift config
@@ -77,6 +79,7 @@ func (d *PodCustomDefaulter) Default(ctx context.Context, obj runtime.Object) er
 	}
 	scheme := runtime.NewScheme()
 	_ = imageshiftv1.AddToScheme(scheme) // Register the scheme
+	_ = corev1.AddToScheme(scheme)
 
 	controllerClient, err := client.New(config, client.Options{Scheme: scheme})
 	if err != nil {
@@ -85,7 +88,6 @@ func (d *PodCustomDefaulter) Default(ctx context.Context, obj runtime.Object) er
 
 	// TODO: better way to do this?
 	// should the imageshift config be forced named?
-
 	resources := &imageshiftv1.ImageshiftList{}
 	if err := controllerClient.List(ctx, resources, &client.ListOptions{}); err != nil {
 		return fmt.Errorf("failed to list Imageshift resources: %v", err)
@@ -94,32 +96,57 @@ func (d *PodCustomDefaulter) Default(ctx context.Context, obj runtime.Object) er
 	mapping := resources.Items[0]
 
 	hasChanged := false
-
-	for i, container := range pod.Spec.Containers {
-		img := swap.SwapImage(mapping, container.Image)
-
-		if img != "" {
-			hasChanged = true
-
-			annotation := fmt.Sprintf("%s.container.imageshift.dev/original", pod.Spec.Containers[i].Name)
-			pod.Annotations[annotation] = pod.Spec.Containers[i].Image
-
-			pod.Spec.Containers[i].Image = img
-
-			podlog.Info("Patched Container", "pod", container.Name, "reference", img)
-		}
+	podlog.Info("here")
+	// Fetch the Pod's Namespace
+	ns := &corev1.Namespace{}
+	if err := controllerClient.Get(ctx, types.NamespacedName{Name: pod.Namespace}, ns); err != nil {
+		podlog.Error(err, "failed to get pod namespace", "namespace", pod.Namespace)
+		// Decide how to handle this: fail open (return nil) or closed (return err)
+		// Given failurePolicy=ignore, returning nil might be preferred.
+		return nil
 	}
 
-	for i, container := range pod.Spec.InitContainers {
-		img := swap.SwapImage(mapping, container.Image)
+	// Check for the specific annotation on the namespace
+	// TODO: Set to default check from CRDs
+	if val, ok := ns.Labels["imageshift.dev"]; !ok || val != "enabled" {
+		podlog.Info("Namespace not annotated for imageshift or annotation not set to true, skipping modification", "namespace", pod.Namespace, "annotation", "imageshift.dev")
+		return nil // Skip modification if annotation is not present or not "true"
+	}
 
-		if img != "" {
-			hasChanged = true
-			annotation := fmt.Sprintf("%s.initContainer.imageshift.dev/original", pod.Spec.Containers[i].Name)
-			pod.Annotations[annotation] = pod.Spec.Containers[i].Image
-			pod.Spec.InitContainers[i].Image = img
-			podlog.Info("Patched initContainer", "pod", container.Name, "reference", img)
+	if len(pod.Spec.Containers) > 0 {
+		for i, container := range pod.Spec.Containers {
+			img := swap.SwapImage(mapping, container.Image)
+
+			if img != "" {
+				hasChanged = true
+
+				annotation := fmt.Sprintf("%s.container.imageshift.dev/original", pod.Spec.Containers[i].Name)
+				pod.Annotations[annotation] = pod.Spec.Containers[i].Image
+
+				pod.Spec.Containers[i].Image = img
+
+				podlog.Info("Patched Container", "pod", container.Name, "reference", img)
+			}
 		}
+		// safe logic here
+	} else {
+		podlog.Info("Pod has no Containers")
+	}
+
+	if len(pod.Spec.InitContainers) > 0 {
+		for i, container := range pod.Spec.InitContainers {
+			img := swap.SwapImage(mapping, container.Image)
+
+			if img != "" {
+				hasChanged = true
+				annotation := fmt.Sprintf("%s.initContainer.imageshift.dev/original", pod.Spec.Containers[i].Name)
+				pod.Annotations[annotation] = pod.Spec.Containers[i].Image
+				pod.Spec.InitContainers[i].Image = img
+				podlog.Info("Patched initContainer", "pod", container.Name, "reference", img)
+			}
+		}
+	} else {
+		podlog.Info("Pod has no InitContainers")
 	}
 
 	if hasChanged {

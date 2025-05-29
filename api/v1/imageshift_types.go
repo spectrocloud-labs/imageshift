@@ -34,15 +34,18 @@ type ImageshiftSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// Foo is an example field of Imageshift. Edit imageshift_types.go to remove/update
-	Default  string            `json:"default"`
+	// +default:value="docker.io"
+	Default  string            `json:"default,omitempty"`
 	Mappings ImageshiftMapping `json:"mappings,omitempty"`
+
+	// +default:value="imageshift.dev"
+	NamespaceSelector string `json:"namespaceSelector"`
 }
 
 type ImageshiftMapping struct {
-	Swap      []ImageshiftSwap      `json:"swap"`
-	ExactSwap []ImageshiftExactSwap `json:"exactSwap"`
-	RegexSwap []ImageshiftRegexSwap `json:"regexSwap"`
+	Swap      []ImageshiftSwap      `json:"swap,omitempty"`
+	ExactSwap []ImageshiftExactSwap `json:"exactSwap,omitempty"`
+	RegexSwap []ImageshiftRegexSwap `json:"regexSwap,omitempty"`
 }
 
 type ImageshiftSwap struct {

@@ -40,8 +40,7 @@ spec:
             description: ImageshiftSpec defines the desired state of Imageshift.
             properties:
               default:
-                description: Foo is an example field of Imageshift. Edit imageshift_types.go
-                  to remove/update
+                default: docker.io
                 type: string
               mappings:
                 properties:
@@ -81,13 +80,12 @@ spec:
                       - target
                       type: object
                     type: array
-                required:
-                - exactSwap
-                - regexSwap
-                - swap
                 type: object
+              namespaceSelector:
+                default: imageshift.dev
+                type: string
             required:
-            - default
+            - namespaceSelector
             type: object
           status:
             description: ImageshiftStatus defines the observed state of Imageshift.

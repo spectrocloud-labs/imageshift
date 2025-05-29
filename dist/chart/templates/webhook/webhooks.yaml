@@ -11,12 +11,12 @@ metadata:
   labels:
     {{- include "chart.labels" . | nindent 4 }}
 webhooks:
-  - name: mpod-v1.kb.io
+  - name: imageshift.dev
     clientConfig:
       service:
         name: imageshift-v2-webhook-service
         namespace: {{ .Release.Namespace }}
-        path: /mutate--v1-pod
+        path: /mutate
     failurePolicy: Ignore
     sideEffects: None
     admissionReviewVersions:

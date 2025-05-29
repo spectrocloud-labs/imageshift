@@ -20,15 +20,14 @@ import (
 	"context"
 	"fmt"
 
-	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	imageshiftv1 "github.com/spectrocloud-labs/imageshift/api/v1"
 	"github.com/spectrocloud-labs/imageshift/pkg/swap"
-	"github.com/spectrocloud/gomi/pkg/logger"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 // ImageshiftReconciler reconciles a Imageshift object
@@ -40,6 +39,7 @@ type ImageshiftReconciler struct {
 // +kubebuilder:rbac:groups=imageshift.dev,resources=imageshifts,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=imageshift.dev,resources=imageshifts/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=imageshift.dev,resources=imageshifts/finalizers,verbs=update
+// +kubebuilder:rbac:groups=core,resources=namespaces,verbs=get;list;watch
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -52,7 +52,6 @@ type ImageshiftReconciler struct {
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.20.0/pkg/reconcile
 func (r *ImageshiftReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = log.FromContext(ctx)
-
 	var namespaceList corev1.NamespaceList
 
 	_ = imageshiftv1.AddToScheme(r.Scheme)
@@ -69,7 +68,6 @@ func (r *ImageshiftReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	config := resources.Items[0]
 
 	if err := r.Client.List(ctx, &namespaceList); err != nil {
-		log.Error(err, "Failed to list namespaces")
 		return ctrl.Result{}, err
 	}
 
@@ -77,11 +75,10 @@ func (r *ImageshiftReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	annotationKey := "imageshift.dev"
 
 	for _, ns := range namespaceList.Items {
-		if val, exists := ns.Annotations[annotationKey]; exists {
+		if _, exists := ns.Annotations[annotationKey]; exists {
 
 			var podList corev1.PodList
 			if err := r.Client.List(ctx, &podList, client.InNamespace(ns.Namespace)); err != nil {
-				logger.Error(err, "Failed to list pods in namespace", "namespace", ns.Name)
 				continue
 			}
 
@@ -103,8 +100,6 @@ func (r *ImageshiftReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 					r.Client.Delete(ctx, &pod, &client.DeleteOptions{})
 				}
 			}
-
-			logger.Info("Namespace has the required annotation", "namespace", ns.Name, "annotationValue", val)
 		}
 	}
 

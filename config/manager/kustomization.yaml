@@ -6,3 +6,6 @@ images:
 - name: controller
   newName: wcrum/imageshift
   newTag: latest
+- name: wcrum/imageshift
+  newName: wcrum/imageshift
+  newTag: latest

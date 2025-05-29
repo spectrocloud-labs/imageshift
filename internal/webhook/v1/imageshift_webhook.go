@@ -48,7 +48,7 @@ func SetupImageshiftWebhookWithManager(mgr ctrl.Manager) error {
 
 // NOTE: The 'path' attribute must follow a specific pattern and should not be modified directly here.
 // Modifying the path for an invalid path can cause API server errors; failing to locate the webhook.
-// +kubebuilder:webhook:path=/validate-spectrocloud-labs-github-com-v1-imageshift,mutating=false,failurePolicy=ignore,sideEffects=None,groups=imageshift.dev,resources=imageshifts,verbs=create,versions=v1,name=vimageshift-v1.kb.io,admissionReviewVersions=v1
+// +kubebuilder:webhook:path=/validate-imageshift-dev-v1-imageshift,mutating=false,failurePolicy=ignore,sideEffects=None,groups=imageshift.dev,resources=imageshifts,verbs=create,versions=v1,name=vimageshift-v1.kb.io,admissionReviewVersions=v1
 //
 // ImageshiftCustomValidator struct is responsible for validating the Imageshift resource
 // when it is created, updated, or deleted.

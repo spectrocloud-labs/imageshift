@@ -6,7 +6,7 @@ domain: imageshift.dev
 layout:
 - go.kubebuilder.io/v4
 plugins:
-  helm.kubebuilder.io/v1-alpha: {}
+  helm.kubebuilder.io/v1: {}
 projectName: imageshift
 repo: github.com/spectrocloud-labs/imageshift
 resources:

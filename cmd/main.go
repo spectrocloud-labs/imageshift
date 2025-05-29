@@ -51,7 +51,6 @@ var (
 
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
-
 	utilruntime.Must(imageshiftv1.AddToScheme(scheme))
 	utilruntime.Must(spectrocloudlabsgithubcomv1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
@@ -187,7 +186,7 @@ func main() {
 		WebhookServer:          webhookServer,
 		HealthProbeBindAddress: probeAddr,
 		// LeaderElection:         enableLeaderElection,
-		// LeaderElectionID:       "4c82852e.spectrocloud-labs.github.com",
+		// LeaderElectionID:       "4c82852e.imageshift.dev",
 		// LeaderElectionReleaseOnCancel defines if the leader should step down voluntarily
 		// when the Manager ends. This requires the binary to immediately end when the
 		// Manager is stopped, otherwise, this setting is unsafe. Setting this significantly
@@ -209,6 +208,10 @@ func main() {
 	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
 		if err = imageshiftwebhookv1.SetupImageshiftWebhookWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "Imageshift")
+			os.Exit(1)
+		}
+		if err = imageshiftwebhookv1.SetupPodWebhookWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create webhook", "webhook", "Pod")
 			os.Exit(1)
 		}
 	}

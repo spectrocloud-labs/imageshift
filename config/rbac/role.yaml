@@ -5,6 +5,14 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
+  - ""
+  resources:
+  - namespaces
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
   - imageshift.dev
   resources:
   - imageshifts
@@ -30,6 +38,3 @@ rules:
   - get
   - patch
   - update
-- apiGroups: [""]
-  resources: ["pods"]
-  verbs: ["get", "list", "watch"]

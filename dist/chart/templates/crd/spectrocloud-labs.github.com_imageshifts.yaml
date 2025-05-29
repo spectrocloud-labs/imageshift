@@ -10,9 +10,9 @@ metadata:
     "helm.sh/resource-policy": keep
     {{- end }}
     controller-gen.kubebuilder.io/version: v0.17.1
-  name: imageshifts.spectrocloud-labs.github.com
+  name: imageshifts.imageshift.dev
 spec:
-  group: spectrocloud-labs.github.com
+  group: imageshift.dev
   names:
     kind: Imageshift
     listKind: ImageshiftList
