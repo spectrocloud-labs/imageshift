@@ -1,4 +1,4 @@
-name: Publish Docker Image
+name: Publish Docker Image and Helm Chart
 
 on:
   push:
@@ -40,8 +40,6 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
             type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
@@ -61,8 +59,6 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
             type=semver,pattern={{version}}-fips
-            type=semver,pattern={{major}}.{{minor}}-fips
-            type=semver,pattern={{major}}-fips
 
       - name: Build and push FIPS Docker image
         uses: docker/build-push-action@v6
@@ -75,3 +71,35 @@ jobs:
           labels: ${{ steps.meta-fips.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  publish-chart:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+
+      - name: Log in to Container Registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
+
+      - name: Get version from tag
+        id: version
+        run: echo "version=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
+
+      - name: Update chart version and name
+        run: |
+          sed -i "s/^name:.*/name: chart/" dist/chart/Chart.yaml
+          sed -i "s/^version:.*/version: ${{ steps.version.outputs.version }}/" dist/chart/Chart.yaml
+          sed -i "s/^appVersion:.*/appVersion: \"${{ steps.version.outputs.version }}\"/" dist/chart/Chart.yaml
+
+      - name: Package Helm chart
+        run: helm package dist/chart -d .
+
+      - name: Push Helm chart to registry
+        run: helm push chart-${{ steps.version.outputs.version }}.tgz oci://${{ env.REGISTRY }}/wcrum/imageshift
