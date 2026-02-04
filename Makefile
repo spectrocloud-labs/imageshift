@@ -1,5 +1,7 @@
 # Image URL to use all building/pushing image targets
 IMG ?= wcrum/imageshift:latest
+# FIPS image tag (default: same as IMG with -fips suffix, e.g. wcrum/imageshift:latest-fips)
+IMG_FIPS ?= $(IMG)-fips
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -110,6 +112,14 @@ docker-build: ## Build docker image with the manager.
 .PHONY: docker-push
 docker-push: ## Push docker image with the manager.
 	$(CONTAINER_TOOL) push ${IMG}
+
+.PHONY: docker-build-fips
+docker-build-fips: ## Build FIPS (BoringCrypto) docker image; use GOEXPERIMENT=boringcrypto + static link, same distroless runtime.
+	$(CONTAINER_TOOL) build -f Dockerfile.fips -t ${IMG_FIPS} .
+
+.PHONY: docker-push-fips
+docker-push-fips: ## Push FIPS docker image.
+	$(CONTAINER_TOOL) push ${IMG_FIPS}
 
 # PLATFORMS defines the target platforms for the manager image be built to provide support to multiple
 # architectures. (i.e. make docker-buildx IMG=myregistry/mypoperator:0.0.1). To use this option you need to:

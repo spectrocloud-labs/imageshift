@@ -1,0 +1,33 @@
+# FIPS-compliant build using Go BoringCrypto (GOEXPERIMENT=boringcrypto).
+# The binary is statically linked so it can run on distroless; no FIPS libs in the runtime image.
+# See https://go.googlesource.com/go/+/dev.boringcrypto/README.boringcrypto.md
+# This does not constitute FIPS certification; use for environments that require FIPS-allowable crypto.
+
+FROM docker.io/golang:latest AS builder
+ARG TARGETOS
+ARG TARGETARCH
+
+WORKDIR /workspace
+
+COPY go.mod go.mod
+COPY go.sum go.sum
+RUN go mod download
+
+COPY cmd/main.go cmd/main.go
+COPY api/ api/
+COPY internal/ internal/
+COPY pkg/ pkg/
+
+# CGO_ENABLED=1 and GOEXPERIMENT=boringcrypto required for BoringCrypto.
+# Static link so the binary runs on distroless with no extra libs.
+RUN CGO_ENABLED=1 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH} \
+    GOEXPERIMENT=boringcrypto \
+    go build -tags osusergo,netgo \
+    -ldflags "-w -linkmode=external -extldflags -static" \
+    -a -o manager cmd/main.go
+
+FROM gcr.io/distroless/static:nonroot
+WORKDIR /
+COPY --from=builder /workspace/manager .
+USER 65532:65532
+ENTRYPOINT ["/manager"]
