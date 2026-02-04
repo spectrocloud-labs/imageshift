@@ -1,0 +1,79 @@
+.heroBanner {
+  padding: 4rem 0;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.buttons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.features {
+  padding: 4rem 0;
+}
+
+.feature {
+  margin-bottom: 2rem;
+}
+
+.featureCard {
+  padding: 1.5rem;
+  border-radius: 8px;
+  background: var(--ifm-background-surface-color);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  height: 100%;
+}
+
+.featureCard h3 {
+  margin-top: 0;
+  color: var(--ifm-color-primary);
+}
+
+.useCases {
+  padding: 4rem 0;
+  background: var(--ifm-background-surface-color);
+}
+
+.useCase {
+  text-align: center;
+  padding: 1rem;
+}
+
+.useCase h3 {
+  color: var(--ifm-color-primary);
+}
+
+.quickStart {
+  padding: 4rem 0;
+}
+
+.sectionTitle {
+  text-align: center;
+  margin-bottom: 1rem;
+  font-size: 2rem;
+}
+
+.sectionDescription {
+  text-align: center;
+  margin-bottom: 2rem;
+  color: var(--ifm-color-emphasis-600);
+}
+
+.ctaContainer {
+  text-align: center;
+  margin-top: 2rem;
+}
+
+@media screen and (max-width: 966px) {
+  .heroBanner {
+    padding: 2rem;
+  }
+
+  .buttons {
+    flex-direction: column;
+  }
+}
