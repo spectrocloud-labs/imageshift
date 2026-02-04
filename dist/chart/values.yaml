@@ -74,9 +74,15 @@ webhook:
 prometheus:
   enable: false
 
-# [CERT-MANAGER]: To enable cert-manager injection to webhooks set true
+# [CERT-MANAGER]: To enable cert-manager injection to webhooks set true.
+# Set install to true to deploy cert-manager as a subchart (CRDs + controller).
 certmanager:
   enable: true
+  install: false
+
+# Subchart values for cert-manager (used when certmanager.install is true)
+cert-manager:
+  installCRDs: true
 
 # [NETWORK POLICIES]: To enable NetworkPolicies set true
 networkPolicy:
