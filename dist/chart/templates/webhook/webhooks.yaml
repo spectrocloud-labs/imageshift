@@ -11,7 +11,7 @@ metadata:
   labels:
     {{- include "chart.labels" . | nindent 4 }}
 webhooks:
-  - name: imageshift.dev
+  - name: mpod.imageshift.dev
     clientConfig:
       service:
         name: imageshift-v2-webhook-service
