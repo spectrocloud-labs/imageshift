@@ -4,9 +4,8 @@ description: A Helm chart to distribute the project imageshift-v2
 type: application
 version: 0.1.0
 appVersion: "0.1.0"
-icon: "https://example.com/icon.png"
 dependencies:
   - name: cert-manager
-    version: "v1.16.3"
+    version: "1.16.3"
     repository: https://charts.jetstack.io
     condition: certmanager.install

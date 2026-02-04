@@ -98,6 +98,12 @@ jobs:
           sed -i "s/^version:.*/version: ${{ steps.version.outputs.version }}/" dist/chart/Chart.yaml
           sed -i "s/^appVersion:.*/appVersion: \"${{ steps.version.outputs.version }}\"/" dist/chart/Chart.yaml
 
+      - name: Add Helm repositories
+        run: helm repo add jetstack https://charts.jetstack.io
+
+      - name: Update Helm dependencies
+        run: helm dependency update dist/chart
+
       - name: Package Helm chart
         run: helm package dist/chart -d .
 
