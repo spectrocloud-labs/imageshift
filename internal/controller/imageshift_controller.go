@@ -51,7 +51,7 @@ type ImageshiftReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.20.0/pkg/reconcile
 func (r *ImageshiftReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = log.FromContext(ctx)
+	logger := log.FromContext(ctx)
 	var namespaceList corev1.NamespaceList
 
 	_ = imageshiftv1.AddToScheme(r.Scheme)
@@ -97,7 +97,9 @@ func (r *ImageshiftReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 				}
 
 				if shouldDelete {
-					r.Client.Delete(ctx, &pod, &client.DeleteOptions{})
+					if err := r.Client.Delete(ctx, &pod, &client.DeleteOptions{}); err != nil {
+						logger.Error(err, "Failed to delete pod", "pod", pod.Name)
+					}
 				}
 			}
 		}

@@ -28,7 +28,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/webhook"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
 	swap "github.com/spectrocloud-labs/imageshift/pkg/swap"
 )
@@ -39,7 +39,7 @@ var podlog = logf.Log.WithName("pod-resource")
 
 // SetupPodWebhookWithManager registers the webhook for Pod in the manager.
 func SetupPodWebhookWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewWebhookManagedBy(mgr).For(&corev1.Pod{}).
+	return ctrl.NewWebhookManagedBy(mgr, &corev1.Pod{}).
 		WithDefaulter(&PodCustomDefaulter{}).
 		Complete()
 }
@@ -57,15 +57,10 @@ type PodCustomDefaulter struct {
 	// TODO(user): Add more fields as needed for defaulting
 }
 
-var _ webhook.CustomDefaulter = &PodCustomDefaulter{}
+var _ admission.Defaulter[*corev1.Pod] = &PodCustomDefaulter{}
 
 // Default implements webhook.CustomDefaulter so a webhook will be registered for the Kind Pod.
-func (d *PodCustomDefaulter) Default(ctx context.Context, obj runtime.Object) error {
-	pod, ok := obj.(*corev1.Pod)
-	if !ok {
-		return fmt.Errorf("expected an Pod object but got %T", obj)
-	}
-
+func (d *PodCustomDefaulter) Default(ctx context.Context, pod *corev1.Pod) error {
 	fmt.Println(pod.Generation)
 	podlog.Info("Defaulting for Pod", "name", pod.GetName())
 

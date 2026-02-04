@@ -27,7 +27,6 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
 	imageshiftv1 "github.com/spectrocloud-labs/imageshift/api/v1"
@@ -39,7 +38,7 @@ var imageshiftlog = logf.Log.WithName("imageshift-resource")
 
 // SetupImageshiftWebhookWithManager registers the webhook for Imageshift in the manager.
 func SetupImageshiftWebhookWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewWebhookManagedBy(mgr).For(&imageshiftv1.Imageshift{}).
+	return ctrl.NewWebhookManagedBy(mgr, &imageshiftv1.Imageshift{}).
 		WithValidator(&ImageshiftCustomValidator{}).
 		Complete()
 }
@@ -59,14 +58,10 @@ type ImageshiftCustomValidator struct {
 	// TODO(user): Add more fields as needed for validation
 }
 
-var _ webhook.CustomValidator = &ImageshiftCustomValidator{}
+var _ admission.Validator[*imageshiftv1.Imageshift] = &ImageshiftCustomValidator{}
 
 // ValidateCreate implements webhook.CustomValidator so a webhook will be registered for the type Imageshift.
-func (v *ImageshiftCustomValidator) ValidateCreate(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
-	imageshift, ok := obj.(*imageshiftv1.Imageshift)
-	if !ok {
-		return nil, fmt.Errorf("expected a Imageshift object but got %T", obj)
-	}
+func (v *ImageshiftCustomValidator) ValidateCreate(ctx context.Context, imageshift *imageshiftv1.Imageshift) (admission.Warnings, error) {
 	imageshiftlog.Info("Validation for Imageshift upon creation", "name", imageshift.GetName())
 
 	var config *rest.Config
@@ -98,11 +93,11 @@ func (v *ImageshiftCustomValidator) ValidateCreate(ctx context.Context, obj runt
 }
 
 // ValidateUpdate implements webhook.CustomValidator so a webhook will be registered for the type Imageshift.
-func (v *ImageshiftCustomValidator) ValidateUpdate(ctx context.Context, oldObj, newObj runtime.Object) (admission.Warnings, error) {
+func (v *ImageshiftCustomValidator) ValidateUpdate(ctx context.Context, oldObj, newObj *imageshiftv1.Imageshift) (admission.Warnings, error) {
 	return nil, nil
 }
 
 // ValidateDelete implements webhook.CustomValidator so a webhook will be registered for the type Imageshift.
-func (v *ImageshiftCustomValidator) ValidateDelete(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
+func (v *ImageshiftCustomValidator) ValidateDelete(ctx context.Context, imageshift *imageshiftv1.Imageshift) (admission.Warnings, error) {
 	return nil, nil
 }
