@@ -84,11 +84,18 @@ jobs:
 
       - name: Install Helm chart for project
         run: |
-          helm install my-release ./dist/chart --create-namespace --namespace imageshift --set certmanager.install=false
+          helm install my-release ./dist/chart --create-namespace --namespace imageshift \
+            --set certmanager.install=false \
+            --set controllerManager.container.image.repository=imageshift-v2 \
+            --set controllerManager.container.image.tag=v0.1.0
 
       - name: Check Helm release status
         run: |
           helm status my-release --namespace imageshift
+
+      - name: Wait for controller-manager to be ready
+        run: |
+          kubectl wait --namespace imageshift --for=condition=available --timeout=300s deployment/imageshift-v2-controller-manager
 
 # TODO: Uncomment if prometheus.enabled is set to true to confirm that the ServiceMonitor gets created
 #      - name: Check Presence of ServiceMonitor
