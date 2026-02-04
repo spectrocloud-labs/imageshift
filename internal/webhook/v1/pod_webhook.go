@@ -88,6 +88,11 @@ func (d *PodCustomDefaulter) Default(ctx context.Context, pod *corev1.Pod) error
 		return fmt.Errorf("failed to list Imageshift resources: %v", err)
 	}
 
+	if len(resources.Items) == 0 {
+		podlog.Info("No Imageshift resources found, skipping mutation")
+		return nil
+	}
+
 	mapping := resources.Items[0]
 
 	hasChanged := false
