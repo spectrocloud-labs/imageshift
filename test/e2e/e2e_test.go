@@ -31,7 +31,7 @@ import (
 )
 
 // namespace where the project is deployed in
-const namespace = "imageshift-v2-system"
+const namespace = "imageshift"
 
 // serviceAccountName created for the project
 const serviceAccountName = "imageshift-v2-controller-manager"
