@@ -65,8 +65,21 @@ type ImageshiftRegexSwap struct {
 
 // ImageshiftStatus defines the observed state of Imageshift.
 type ImageshiftStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	// Conditions represent the latest available observations of the Imageshift's state
+	// +optional
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
+
+	// LastReconciled is the timestamp of the last successful reconciliation
+	// +optional
+	LastReconciled metav1.Time `json:"lastReconciled,omitempty"`
+
+	// ConfigValid indicates whether the current configuration is valid
+	// +optional
+	ConfigValid bool `json:"configValid,omitempty"`
+
+	// MutatedPodCount tracks the number of pods that have been mutated
+	// +optional
+	MutatedPodCount int64 `json:"mutatedPodCount,omitempty"`
 }
 
 // +kubebuilder:object:root=true

@@ -13,6 +13,15 @@ rules:
   - list
   - watch
 - apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - get
+  - list
+  - watch
+  - delete
+- apiGroups:
   - imageshift.dev
   resources:
   - imageshifts

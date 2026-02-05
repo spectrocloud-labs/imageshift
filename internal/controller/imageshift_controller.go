@@ -40,6 +40,7 @@ type ImageshiftReconciler struct {
 // +kubebuilder:rbac:groups=imageshift.dev,resources=imageshifts/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=imageshift.dev,resources=imageshifts/finalizers,verbs=update
 // +kubebuilder:rbac:groups=core,resources=namespaces,verbs=get;list;watch
+// +kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch;delete
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -59,6 +60,11 @@ func (r *ImageshiftReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	resources := &imageshiftv1.ImageshiftList{}
 	if err := r.Client.List(ctx, resources, &client.ListOptions{}); err != nil {
 		return ctrl.Result{}, fmt.Errorf("failed to list Imageshift resources: %v", err)
+	}
+
+	if len(resources.Items) == 0 {
+		logger.Info("No Imageshift resources found, skipping reconciliation")
+		return ctrl.Result{}, nil
 	}
 
 	if len(resources.Items) > 1 {

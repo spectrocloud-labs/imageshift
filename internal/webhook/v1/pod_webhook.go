@@ -61,7 +61,6 @@ var _ admission.Defaulter[*corev1.Pod] = &PodCustomDefaulter{}
 
 // Default implements webhook.CustomDefaulter so a webhook will be registered for the Kind Pod.
 func (d *PodCustomDefaulter) Default(ctx context.Context, pod *corev1.Pod) error {
-	fmt.Println(pod.Generation)
 	podlog.Info("Defaulting for Pod", "name", pod.GetName())
 
 	// read only one imageshift config
@@ -96,7 +95,7 @@ func (d *PodCustomDefaulter) Default(ctx context.Context, pod *corev1.Pod) error
 	mapping := resources.Items[0]
 
 	hasChanged := false
-	podlog.Info("here")
+
 	// Fetch the Pod's Namespace
 	ns := &corev1.Namespace{}
 	if err := controllerClient.Get(ctx, types.NamespacedName{Name: pod.Namespace}, ns); err != nil {
@@ -111,6 +110,14 @@ func (d *PodCustomDefaulter) Default(ctx context.Context, pod *corev1.Pod) error
 	if val, ok := ns.Labels["imageshift.dev"]; !ok || val != "enabled" {
 		podlog.Info("Namespace not annotated for imageshift or annotation not set to true, skipping modification", "namespace", pod.Namespace, "annotation", "imageshift.dev")
 		return nil // Skip modification if annotation is not present or not "true"
+	}
+
+	// Initialize maps if nil to prevent panic
+	if pod.Annotations == nil {
+		pod.Annotations = make(map[string]string)
+	}
+	if pod.Labels == nil {
+		pod.Labels = make(map[string]string)
 	}
 
 	if len(pod.Spec.Containers) > 0 {
@@ -128,7 +135,6 @@ func (d *PodCustomDefaulter) Default(ctx context.Context, pod *corev1.Pod) error
 				podlog.Info("Patched Container", "pod", container.Name, "reference", img)
 			}
 		}
-		// safe logic here
 	} else {
 		podlog.Info("Pod has no Containers")
 	}
@@ -139,8 +145,8 @@ func (d *PodCustomDefaulter) Default(ctx context.Context, pod *corev1.Pod) error
 
 			if img != "" {
 				hasChanged = true
-				annotation := fmt.Sprintf("%s.initContainer.imageshift.dev/original", pod.Spec.Containers[i].Name)
-				pod.Annotations[annotation] = pod.Spec.Containers[i].Image
+				annotation := fmt.Sprintf("%s.initContainer.imageshift.dev/original", pod.Spec.InitContainers[i].Name)
+				pod.Annotations[annotation] = pod.Spec.InitContainers[i].Image
 				pod.Spec.InitContainers[i].Image = img
 				podlog.Info("Patched initContainer", "pod", container.Name, "reference", img)
 			}

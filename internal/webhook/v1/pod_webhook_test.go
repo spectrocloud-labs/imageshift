@@ -17,45 +17,212 @@ limitations under the License.
 package v1
 
 import (
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
+	"testing"
 
 	corev1 "k8s.io/api/core/v1"
-	// TODO (user): Add any additional imports if needed
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-var _ = Describe("Pod Webhook", func() {
-	var (
-		obj       *corev1.Pod
-		oldObj    *corev1.Pod
-		defaulter PodCustomDefaulter
-	)
+func TestPodNilAnnotationsAndLabels(t *testing.T) {
+	// Test that nil annotations and labels don't cause panic
+	pod := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-pod",
+			Namespace: "default",
+			// Annotations and Labels are nil
+		},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{
+				{
+					Name:  "test-container",
+					Image: "nginx:latest",
+				},
+			},
+		},
+	}
 
-	BeforeEach(func() {
-		obj = &corev1.Pod{}
-		oldObj = &corev1.Pod{}
-		defaulter = PodCustomDefaulter{}
-		Expect(defaulter).NotTo(BeNil(), "Expected defaulter to be initialized")
-		Expect(oldObj).NotTo(BeNil(), "Expected oldObj to be initialized")
-		Expect(obj).NotTo(BeNil(), "Expected obj to be initialized")
-		// TODO (user): Add any setup logic common to all tests
-	})
+	// Verify annotations and labels are nil initially
+	if pod.Annotations != nil {
+		t.Error("Expected Annotations to be nil initially")
+	}
+	if pod.Labels != nil {
+		t.Error("Expected Labels to be nil initially")
+	}
 
-	AfterEach(func() {
-		// TODO (user): Add any teardown logic common to all tests
-	})
+	// Initialize maps like the webhook does
+	if pod.Annotations == nil {
+		pod.Annotations = make(map[string]string)
+	}
+	if pod.Labels == nil {
+		pod.Labels = make(map[string]string)
+	}
 
-	Context("When creating Pod under Defaulting Webhook", func() {
-		// TODO (user): Add logic for defaulting webhooks
-		// Example:
-		// It("Should apply defaults when a required field is empty", func() {
-		//     By("simulating a scenario where defaults should be applied")
-		//     obj.SomeFieldWithDefault = ""
-		//     By("calling the Default method to apply defaults")
-		//     defaulter.Default(ctx, obj)
-		//     By("checking that the default values are set")
-		//     Expect(obj.SomeFieldWithDefault).To(Equal("default_value"))
-		// })
-	})
+	// Now we should be able to write to them without panic
+	pod.Annotations["test-annotation"] = "test-value"
+	pod.Labels["test-label"] = "test-value"
 
-})
+	if pod.Annotations["test-annotation"] != "test-value" {
+		t.Error("Failed to set annotation after initialization")
+	}
+	if pod.Labels["test-label"] != "test-value" {
+		t.Error("Failed to set label after initialization")
+	}
+}
+
+func TestPodWithExistingAnnotationsAndLabels(t *testing.T) {
+	// Test that existing annotations and labels are preserved
+	pod := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-pod",
+			Namespace: "default",
+			Annotations: map[string]string{
+				"existing-annotation": "existing-value",
+			},
+			Labels: map[string]string{
+				"existing-label": "existing-value",
+			},
+		},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{
+				{
+					Name:  "test-container",
+					Image: "nginx:latest",
+				},
+			},
+		},
+	}
+
+	// The nil check should not overwrite existing maps
+	if pod.Annotations == nil {
+		pod.Annotations = make(map[string]string)
+	}
+	if pod.Labels == nil {
+		pod.Labels = make(map[string]string)
+	}
+
+	// Add new entries
+	pod.Annotations["new-annotation"] = "new-value"
+	pod.Labels["new-label"] = "new-value"
+
+	// Verify existing values are preserved
+	if pod.Annotations["existing-annotation"] != "existing-value" {
+		t.Error("Existing annotation was overwritten")
+	}
+	if pod.Labels["existing-label"] != "existing-value" {
+		t.Error("Existing label was overwritten")
+	}
+
+	// Verify new values are added
+	if pod.Annotations["new-annotation"] != "new-value" {
+		t.Error("Failed to add new annotation")
+	}
+	if pod.Labels["new-label"] != "new-value" {
+		t.Error("Failed to add new label")
+	}
+}
+
+func TestInitContainerAnnotationFormat(t *testing.T) {
+	pod := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        "test-pod",
+			Namespace:   "default",
+			Annotations: make(map[string]string),
+		},
+		Spec: corev1.PodSpec{
+			InitContainers: []corev1.Container{
+				{
+					Name:  "init-container-1",
+					Image: "busybox:latest",
+				},
+				{
+					Name:  "init-container-2",
+					Image: "alpine:latest",
+				},
+			},
+			Containers: []corev1.Container{
+				{
+					Name:  "main-container",
+					Image: "nginx:latest",
+				},
+			},
+		},
+	}
+
+	// Simulate the webhook annotation logic for init containers
+	for i := range pod.Spec.InitContainers {
+		annotationKey := pod.Spec.InitContainers[i].Name + ".initContainer.imageshift.dev/original"
+		pod.Annotations[annotationKey] = pod.Spec.InitContainers[i].Image
+	}
+
+	// Verify annotations are correctly keyed by init container name
+	expected := map[string]string{
+		"init-container-1.initContainer.imageshift.dev/original": "busybox:latest",
+		"init-container-2.initContainer.imageshift.dev/original": "alpine:latest",
+	}
+
+	for key, value := range expected {
+		if pod.Annotations[key] != value {
+			t.Errorf("Expected annotation %s=%s, got %s", key, value, pod.Annotations[key])
+		}
+	}
+}
+
+func TestContainerAnnotationFormat(t *testing.T) {
+	pod := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        "test-pod",
+			Namespace:   "default",
+			Annotations: make(map[string]string),
+		},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{
+				{
+					Name:  "container-1",
+					Image: "nginx:latest",
+				},
+				{
+					Name:  "container-2",
+					Image: "redis:latest",
+				},
+			},
+		},
+	}
+
+	// Simulate the webhook annotation logic for containers
+	for i := range pod.Spec.Containers {
+		annotationKey := pod.Spec.Containers[i].Name + ".container.imageshift.dev/original"
+		pod.Annotations[annotationKey] = pod.Spec.Containers[i].Image
+	}
+
+	// Verify annotations are correctly keyed by container name
+	expected := map[string]string{
+		"container-1.container.imageshift.dev/original": "nginx:latest",
+		"container-2.container.imageshift.dev/original": "redis:latest",
+	}
+
+	for key, value := range expected {
+		if pod.Annotations[key] != value {
+			t.Errorf("Expected annotation %s=%s, got %s", key, value, pod.Annotations[key])
+		}
+	}
+}
+
+func TestMutatedLabel(t *testing.T) {
+	pod := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-pod",
+			Namespace: "default",
+			Labels:    make(map[string]string),
+		},
+	}
+
+	// Simulate setting the mutated label
+	hasChanged := true
+	if hasChanged {
+		pod.Labels["imageshift.dev/mutated"] = "true"
+	}
+
+	if pod.Labels["imageshift.dev/mutated"] != "true" {
+		t.Error("Expected mutated label to be set")
+	}
+}

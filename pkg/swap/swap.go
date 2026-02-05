@@ -5,10 +5,42 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/google/go-containerregistry/pkg/name"
 	imageshiftv1 "github.com/spectrocloud-labs/imageshift/api/v1"
 )
+
+// regexCache caches compiled regex patterns to avoid recompilation per pod
+var (
+	regexCache   = make(map[string]*regexp.Regexp)
+	regexCacheMu sync.RWMutex
+)
+
+// getCompiledRegex returns a cached compiled regex or compiles and caches a new one
+func getCompiledRegex(expression string) (*regexp.Regexp, error) {
+	regexCacheMu.RLock()
+	if re, ok := regexCache[expression]; ok {
+		regexCacheMu.RUnlock()
+		return re, nil
+	}
+	regexCacheMu.RUnlock()
+
+	regexCacheMu.Lock()
+	defer regexCacheMu.Unlock()
+
+	// Double-check after acquiring write lock
+	if re, ok := regexCache[expression]; ok {
+		return re, nil
+	}
+
+	re, err := regexp.Compile(expression)
+	if err != nil {
+		return nil, err
+	}
+	regexCache[expression] = re
+	return re, nil
+}
 
 func SwapImage(config imageshiftv1.Imageshift, image string) string {
 	ref, _ := name.ParseReference(image, name.WithDefaultRegistry(config.Spec.Default))
@@ -46,7 +78,11 @@ func SwapImage(config imageshiftv1.Imageshift, image string) string {
 	}
 
 	for _, regexSwap := range config.Spec.Mappings.RegexSwap {
-		re := regexp.MustCompile(regexSwap.Expression)
+		re, err := getCompiledRegex(regexSwap.Expression)
+		if err != nil {
+			// Skip invalid regex patterns
+			continue
+		}
 
 		match := re.FindStringSubmatch(ref.String())
 		if match != nil {
