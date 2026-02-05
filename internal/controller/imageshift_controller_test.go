@@ -114,7 +114,7 @@ var _ = Describe("Imageshift Controller", func() {
 				},
 			})
 			Expect(err).NotTo(HaveOccurred())
-			Expect(result.Requeue).To(BeFalse())
+			Expect(result.RequeueAfter).To(BeZero())
 		})
 	})
 

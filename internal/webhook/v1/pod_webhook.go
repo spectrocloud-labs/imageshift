@@ -33,6 +33,11 @@ import (
 	swap "github.com/spectrocloud-labs/imageshift/pkg/swap"
 )
 
+const (
+	mutatedLabelValue = "true"
+	enabledLabelValue = "enabled"
+)
+
 // nolint:unused
 // log is for logging in this package.
 var podlog = logf.Log.WithName("pod-resource")
@@ -107,7 +112,7 @@ func (d *PodCustomDefaulter) Default(ctx context.Context, pod *corev1.Pod) error
 
 	// Check for the specific annotation on the namespace
 	// TODO: Set to default check from CRDs
-	if val, ok := ns.Labels["imageshift.dev"]; !ok || val != "enabled" {
+	if val, ok := ns.Labels["imageshift.dev"]; !ok || val != enabledLabelValue {
 		podlog.Info("Namespace not annotated for imageshift or annotation not set to true, skipping modification", "namespace", pod.Namespace, "annotation", "imageshift.dev")
 		return nil // Skip modification if annotation is not present or not "true"
 	}
@@ -156,7 +161,7 @@ func (d *PodCustomDefaulter) Default(ctx context.Context, pod *corev1.Pod) error
 	}
 
 	if hasChanged {
-		pod.Labels["imageshift.dev/mutated"] = "true"
+		pod.Labels["imageshift.dev/mutated"] = mutatedLabelValue
 	}
 
 	return nil

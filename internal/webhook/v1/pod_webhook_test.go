@@ -23,6 +23,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+const (
+	testValueStr     = "test-value"
+	newValueStr      = "new-value"
+	existingValueStr = "existing-value"
+)
+
 func TestPodNilAnnotationsAndLabels(t *testing.T) {
 	// Test that nil annotations and labels don't cause panic
 	pod := &corev1.Pod{
@@ -58,13 +64,13 @@ func TestPodNilAnnotationsAndLabels(t *testing.T) {
 	}
 
 	// Now we should be able to write to them without panic
-	pod.Annotations["test-annotation"] = "test-value"
-	pod.Labels["test-label"] = "test-value"
+	pod.Annotations["test-annotation"] = testValueStr
+	pod.Labels["test-label"] = testValueStr
 
-	if pod.Annotations["test-annotation"] != "test-value" {
+	if pod.Annotations["test-annotation"] != testValueStr {
 		t.Error("Failed to set annotation after initialization")
 	}
-	if pod.Labels["test-label"] != "test-value" {
+	if pod.Labels["test-label"] != testValueStr {
 		t.Error("Failed to set label after initialization")
 	}
 }
@@ -76,10 +82,10 @@ func TestPodWithExistingAnnotationsAndLabels(t *testing.T) {
 			Name:      "test-pod",
 			Namespace: "default",
 			Annotations: map[string]string{
-				"existing-annotation": "existing-value",
+				"existing-annotation": existingValueStr,
 			},
 			Labels: map[string]string{
-				"existing-label": "existing-value",
+				"existing-label": existingValueStr,
 			},
 		},
 		Spec: corev1.PodSpec{
@@ -101,22 +107,22 @@ func TestPodWithExistingAnnotationsAndLabels(t *testing.T) {
 	}
 
 	// Add new entries
-	pod.Annotations["new-annotation"] = "new-value"
-	pod.Labels["new-label"] = "new-value"
+	pod.Annotations["new-annotation"] = newValueStr
+	pod.Labels["new-label"] = newValueStr
 
 	// Verify existing values are preserved
-	if pod.Annotations["existing-annotation"] != "existing-value" {
+	if pod.Annotations["existing-annotation"] != existingValueStr {
 		t.Error("Existing annotation was overwritten")
 	}
-	if pod.Labels["existing-label"] != "existing-value" {
+	if pod.Labels["existing-label"] != existingValueStr {
 		t.Error("Existing label was overwritten")
 	}
 
 	// Verify new values are added
-	if pod.Annotations["new-annotation"] != "new-value" {
+	if pod.Annotations["new-annotation"] != newValueStr {
 		t.Error("Failed to add new annotation")
 	}
-	if pod.Labels["new-label"] != "new-value" {
+	if pod.Labels["new-label"] != newValueStr {
 		t.Error("Failed to add new label")
 	}
 }
@@ -219,10 +225,10 @@ func TestMutatedLabel(t *testing.T) {
 	// Simulate setting the mutated label
 	hasChanged := true
 	if hasChanged {
-		pod.Labels["imageshift.dev/mutated"] = "true"
+		pod.Labels["imageshift.dev/mutated"] = mutatedLabelValue
 	}
 
-	if pod.Labels["imageshift.dev/mutated"] != "true" {
+	if pod.Labels["imageshift.dev/mutated"] != mutatedLabelValue {
 		t.Error("Expected mutated label to be set")
 	}
 }
