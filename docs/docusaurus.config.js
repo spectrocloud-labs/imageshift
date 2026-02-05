@@ -55,6 +55,10 @@ const config = {
             label: 'Documentation',
           },
           {
+            type: 'custom-versionBadge',
+            position: 'right',
+          },
+          {
             href: 'https://github.com/wcrum/imageshift',
             label: 'GitHub',
             position: 'right',

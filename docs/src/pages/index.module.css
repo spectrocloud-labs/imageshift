@@ -47,6 +47,22 @@
   color: var(--ifm-color-primary);
 }
 
+.partner {
+  padding: 4rem 0;
+}
+
+.partnerLogo {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 2rem;
+}
+
+.partnerLogo img {
+  max-width: 350px;
+  height: auto;
+}
+
 .quickStart {
   padding: 4rem 0;
 }
@@ -76,4 +92,5 @@
   .buttons {
     flex-direction: column;
   }
+
 }

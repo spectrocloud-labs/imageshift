@@ -3,6 +3,7 @@ import Link from '@docusaurus/Link';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import Layout from '@theme/Layout';
 import CodeBlock from '@theme/CodeBlock';
+import ThemedImage from '@theme/ThemedImage';
 
 import styles from './index.module.css';
 
@@ -21,8 +22,7 @@ function HeroSection() {
           </Link>
           <Link
             className="button button--secondary button--lg"
-            href="https://github.com/wcrum/imageshift"
-            style={{ marginLeft: '1rem' }}>
+            href="https://github.com/wcrum/imageshift">
             GitHub
           </Link>
         </div>
@@ -111,6 +111,27 @@ function UseCasesSection() {
   );
 }
 
+function PartnerSection() {
+  return (
+    <section className={styles.partner}>
+      <div className="container">
+        <h2 className={styles.sectionTitle}>Proudly Developed At</h2>
+        <div className={styles.partnerLogo}>
+          <Link href="https://www.spectrocloud.com/solutions/government">
+            <ThemedImage
+              alt="Spectro Cloud Government"
+              sources={{
+                light: '/img/Government_SpectroCloud_Horizontal_light-bkgd_RGB.png',
+                dark: '/img/Government_SpectroCloud_Horizontal_dark-bkgd_RGB.png',
+              }}
+            />
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 const quickStartYaml = `# 1. Label your namespace
 kubectl label namespace default imageshift.dev=enabled
 
@@ -164,6 +185,7 @@ export default function Home() {
       <main>
         <FeatureSection />
         <UseCasesSection />
+        <PartnerSection />
         <QuickStartSection />
       </main>
     </Layout>

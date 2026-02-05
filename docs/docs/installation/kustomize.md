@@ -140,7 +140,7 @@ resources:
 images:
   - name: controller
     newName: ghcr.io/wcrum/imageshift
-    newTag: v1.0.0
+    newTag: <version>  # Replace with desired version from https://github.com/wcrum/imageshift/releases
 ```
 
 ## Development Installation

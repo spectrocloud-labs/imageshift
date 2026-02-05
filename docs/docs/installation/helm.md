@@ -81,7 +81,7 @@ replicaCount: 2
 
 image:
   repository: ghcr.io/wcrum/imageshift
-  tag: v1.0.0
+  tag: <version>  # Replace with desired version from https://github.com/wcrum/imageshift/releases
   pullPolicy: IfNotPresent
 
 controller:

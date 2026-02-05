@@ -103,3 +103,37 @@ table th {
 .homepage-section:nth-child(even) {
   background-color: var(--ifm-background-surface-color);
 }
+
+/* Theme-aware images */
+[data-theme='light'] .logo-dark {
+  display: none;
+}
+
+[data-theme='dark'] .logo-light {
+  display: none;
+}
+
+/* Partner logo styling */
+.partner-logo {
+  max-width: 300px;
+  height: auto;
+  margin: 1rem 0;
+}
+
+/* Navbar version badge */
+.version-badge {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--ifm-navbar-link-color);
+  text-decoration: none;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  background-color: var(--ifm-color-emphasis-200);
+  transition: background-color 0.2s ease;
+}
+
+.version-badge:hover {
+  color: var(--ifm-navbar-link-hover-color);
+  background-color: var(--ifm-color-emphasis-300);
+  text-decoration: none;
+}
