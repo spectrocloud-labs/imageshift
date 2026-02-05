@@ -17,6 +17,7 @@ const sidebars = {
       label: 'Reference',
       items: [
         'reference/crd',
+        'reference/interactive',
         'reference/configuration',
       ],
     },
