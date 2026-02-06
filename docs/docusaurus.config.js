@@ -45,7 +45,8 @@ const config = {
         title: 'ImageShift',
         logo: {
           alt: 'ImageShift Logo',
-          src: 'img/logo.svg',
+          src: 'img/imageshift-icon-light.svg',
+          srcDark: 'img/imageshift-icon-dark.svg',
         },
         items: [
           {

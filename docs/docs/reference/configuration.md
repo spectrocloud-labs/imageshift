@@ -239,6 +239,15 @@ kubectl label namespace prod-api imageshift.dev=enabled
 kubectl label namespace dev-app imageshift.dev-
 ```
 
+## Registry Normalization
+
+ImageShift normalizes registry names to handle aliases. For example:
+
+- `docker.io` is equivalent to `index.docker.io` (Docker Hub's canonical name)
+- Images without a registry prefix (e.g., `nginx:latest`) use the `spec.default` registry
+
+This means you can use `docker.io` in your swap rules and it will match images specified as either `docker.io/nginx` or `nginx` (when default is `docker.io`).
+
 ## Tips for Writing Regex Patterns
 
 ### Escape Special Characters

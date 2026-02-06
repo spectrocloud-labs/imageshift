@@ -42,6 +42,12 @@ spec:
               default:
                 default: docker.io
                 type: string
+              enforceExistingPods:
+                description: |-
+                  EnforceExistingPods when true, the controller will delete pods that have
+                  images not matching the swap rules. This forces pod recreation with correct images.
+                  Default: false (disabled)
+                type: boolean
               mappings:
                 properties:
                   exactSwap:

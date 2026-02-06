@@ -8,13 +8,13 @@ Before installing ImageShift, ensure your environment meets the following requir
 
 ## Kubernetes Version
 
-- **Kubernetes 1.35+** is required
+- **Kubernetes 1.19+** is required
 - The mutating admission webhook API must be enabled (enabled by default)
 
 Verify your Kubernetes version:
 
 ```bash
-kubectl version --short
+kubectl version
 ```
 
 ## kubectl

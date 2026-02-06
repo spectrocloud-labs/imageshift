@@ -40,6 +40,12 @@ type ImageshiftSpec struct {
 
 	// +default:value="imageshift.dev"
 	NamespaceSelector string `json:"namespaceSelector"`
+
+	// EnforceExistingPods when true, the controller will delete pods that have
+	// images not matching the swap rules. This forces pod recreation with correct images.
+	// Default: false (disabled)
+	// +optional
+	EnforceExistingPods bool `json:"enforceExistingPods,omitempty"`
 }
 
 type ImageshiftMapping struct {

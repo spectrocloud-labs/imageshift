@@ -57,6 +57,13 @@ export const schemaData = {
           description: 'The label key used to identify namespaces for image swapping',
         },
         {
+          name: 'enforceExistingPods',
+          type: 'boolean',
+          required: false,
+          default: false,
+          description: 'When true, the controller will delete pods that have images not matching the swap rules, forcing pod recreation with correct images',
+        },
+        {
           name: 'mappings',
           type: 'object',
           required: false,
@@ -139,8 +146,33 @@ export const schemaData = {
       name: 'status',
       type: 'object',
       required: false,
-      description: 'ImageshiftStatus defines the observed state of Imageshift (currently unused)',
-      children: [],
+      description: 'ImageshiftStatus defines the observed state of Imageshift',
+      children: [
+        {
+          name: 'conditions',
+          type: 'array',
+          required: false,
+          description: 'Standard Kubernetes conditions for the resource',
+        },
+        {
+          name: 'lastReconciled',
+          type: 'string',
+          required: false,
+          description: 'Timestamp of the last successful reconciliation',
+        },
+        {
+          name: 'configValid',
+          type: 'boolean',
+          required: false,
+          description: 'Whether the current configuration is valid',
+        },
+        {
+          name: 'mutatedPodCount',
+          type: 'integer',
+          required: false,
+          description: 'Total number of pods that have been mutated',
+        },
+      ],
     },
   ],
 };

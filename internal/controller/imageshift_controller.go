@@ -73,18 +73,24 @@ func (r *ImageshiftReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 	config := resources.Items[0]
 
+	// Skip pod reconciliation if enforceExistingPods is not enabled
+	if !config.Spec.EnforceExistingPods {
+		logger.V(1).Info("EnforceExistingPods is disabled, skipping pod reconciliation")
+		return ctrl.Result{}, nil
+	}
+
 	if err := r.Client.List(ctx, &namespaceList); err != nil {
 		return ctrl.Result{}, err
 	}
 
-	// Define the annotation key you want to check
-	annotationKey := "imageshift.dev"
+	// Define the label key to check (webhook uses labels, not annotations)
+	labelKey := "imageshift.dev"
 
 	for _, ns := range namespaceList.Items {
-		if _, exists := ns.Annotations[annotationKey]; exists {
+		if _, exists := ns.Labels[labelKey]; exists {
 
 			var podList corev1.PodList
-			if err := r.Client.List(ctx, &podList, client.InNamespace(ns.Namespace)); err != nil {
+			if err := r.Client.List(ctx, &podList, client.InNamespace(ns.Name)); err != nil {
 				continue
 			}
 
@@ -103,6 +109,7 @@ func (r *ImageshiftReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 				}
 
 				if shouldDelete {
+					logger.Info("Deleting pod with non-matching images", "namespace", ns.Name, "pod", pod.Name)
 					if err := r.Client.Delete(ctx, &pod, &client.DeleteOptions{}); err != nil {
 						logger.Error(err, "Failed to delete pod", "pod", pod.Name)
 					}

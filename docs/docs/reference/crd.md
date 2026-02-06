@@ -22,8 +22,9 @@ The Imageshift resource defines image mapping rules that are applied to pods cre
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| `spec.default` | string | `"docker.io"` | The default registry for images without an explicit registry |
-| `spec.namespaceSelector` | string | `"imageshift.dev"` | The label key used to identify namespaces for image swapping |
+| `spec.default` | string | `"docker.io"` | The default registry assumed for images without an explicit registry prefix (e.g., `nginx` becomes `docker.io/library/nginx`) |
+| `spec.namespaceSelector` | string | `"imageshift.dev"` | Reserved for future use. Currently ignored - namespaces must use label `imageshift.dev=enabled` |
+| `spec.enforceExistingPods` | boolean | `false` | When enabled, the controller will delete pods that have images not matching the swap rules, forcing pod recreation with correct images |
 | `spec.mappings` | object | | Container for all mapping rules |
 
 ### Mappings
@@ -154,11 +155,38 @@ spec:
         target: "registry.internal.example.com/ecr/$1/$2/$3"
 ```
 
+## Enforcing Existing Pods
+
+By default, ImageShift only mutates pods at creation time via the admission webhook. Pods that already exist when ImageShift is installed or when rules are changed will not be affected.
+
+To enforce image swap rules on existing pods, enable the `enforceExistingPods` field:
+
+```yaml
+apiVersion: imageshift.dev/v1
+kind: Imageshift
+metadata:
+  name: imageshift
+spec:
+  enforceExistingPods: true
+  mappings:
+    swap:
+      - registry: docker.io
+        target: registry.internal.example.com/dockerhub
+```
+
+:::warning
+**This is a disruptive operation.** When enabled, the controller will **delete** any pods in labeled namespaces that have images not matching the current swap rules. This forces the pods to be recreated by their controllers (Deployment, StatefulSet, etc.) with the correct images applied by the webhook.
+
+Only enable this feature when you understand the impact:
+- Pods will be deleted and recreated
+- Stateless workloads managed by controllers will recover automatically
+- Standalone pods (not managed by a controller) will be permanently deleted
+- Brief service interruptions may occur during pod recreation
+:::
+
 ## Namespace Selection
 
-ImageShift only processes pods in namespaces that have the selector label set to `enabled`.
-
-Default selector label: `imageshift.dev=enabled`
+ImageShift only processes pods in namespaces that have the label `imageshift.dev=enabled`.
 
 To enable a namespace:
 
@@ -172,29 +200,59 @@ To disable a namespace:
 kubectl label namespace my-namespace imageshift.dev-
 ```
 
-To use a custom selector label, set `spec.namespaceSelector`:
+:::note
+The `spec.namespaceSelector` field is reserved for future use. Currently, ImageShift always uses `imageshift.dev` as the label key.
+:::
+
+## Pod Annotations and Labels
+
+When ImageShift mutates a pod, it adds the following metadata:
+
+### Labels
+
+| Label | Value | Description |
+|-------|-------|-------------|
+| `imageshift.dev/mutated` | `true` | Added when at least one container image was swapped |
+
+### Annotations
+
+For each mutated container, ImageShift stores the original image reference:
+
+| Annotation Pattern | Description |
+|--------------------|-------------|
+| `<container-name>.container.imageshift.dev/original` | Original image for regular containers |
+| `<container-name>.initContainer.imageshift.dev/original` | Original image for init containers |
+
+Example for a pod with an nginx container:
 
 ```yaml
-spec:
-  namespaceSelector: custom-label.example.com
+metadata:
+  labels:
+    imageshift.dev/mutated: "true"
+  annotations:
+    nginx.container.imageshift.dev/original: "nginx:latest"
 ```
 
-Then label namespaces with:
+You can use these annotations to verify mutations or for debugging:
 
 ```bash
-kubectl label namespace my-namespace custom-label.example.com=enabled
+kubectl get pod <pod-name> -o jsonpath='{.metadata.annotations}' | jq .
 ```
 
 ## Limitations
 
 - Only one Imageshift resource can exist in the cluster at a time
 - The validating webhook rejects creation of additional Imageshift resources
-- Init containers and ephemeral containers are also processed
+- Init containers are also processed
 - Images in Pod templates (Deployments, StatefulSets, etc.) are processed when Pods are created
 
 ## Status
 
-The Imageshift resource does not currently expose status fields. Future versions may include:
-- Count of processed pods
-- Last reconciliation time
-- Error conditions
+The Imageshift resource exposes the following status fields:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `conditions` | array | Standard Kubernetes conditions for the resource |
+| `lastReconciled` | timestamp | When the resource was last successfully reconciled |
+| `configValid` | boolean | Whether the current configuration is valid |
+| `mutatedPodCount` | integer | Total number of pods that have been mutated |

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- Back container (source) -->
+  <rect x="30" y="35" width="90" height="110" rx="12" fill="none" stroke="#5B93E8" stroke-width="10" opacity="0.4"/>
+  <!-- Front container (destination) -->
+  <rect x="80" y="55" width="90" height="110" rx="12" fill="none" stroke="#6EA1F0" stroke-width="10"/>
+  <!-- Shift arrow -->
+  <line x1="52" y1="22" x2="135" y2="22" stroke="#6EA1F0" stroke-width="10" stroke-linecap="round"/>
+  <polyline points="125,10 139,22 125,34" fill="none" stroke="#6EA1F0" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

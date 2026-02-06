@@ -2,7 +2,7 @@
 
 
 <p align="left">
-  <img width="200" height="200" src="./public/imageshift.png">
+  <img width="200" height="200" src="./imageshift-icon.svg" alt="ImageShift Logo">
 </p>
 
 
@@ -53,8 +53,8 @@ helm install \
 ### Prerequisites
 - go version v1.23.0+
 - docker version 17.03+.
-- kubectl version v1.11.3+.
-- Access to a Kubernetes v1.11.3+ cluster.
+- kubectl version v1.19+.
+- Access to a Kubernetes v1.19+ cluster (mutating webhooks required).
 
 ### To Deploy on the cluster
 **Build and push your image to the location specified by `IMG`:**
@@ -155,7 +155,15 @@ previously added to 'dist/chart/values.yaml' or 'dist/chart/manager/manager.yaml
 is manually re-applied afterwards.
 
 ## Contributing
-// TODO(user): Add detailed information on how you would like others to contribute to this project
+
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+### Quick Start for Contributors
+
+1. Fork and clone the repository
+2. Run `make test` to verify the test suite passes
+3. Create a feature branch and make your changes
+4. Submit a pull request
 
 **NOTE:** Run `make help` for more information on all potential `make` targets
 

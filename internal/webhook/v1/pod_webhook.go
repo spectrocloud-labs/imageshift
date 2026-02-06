@@ -133,12 +133,11 @@ func (d *PodCustomDefaulter) Default(ctx context.Context, pod *corev1.Pod) error
 				hasChanged = true
 
 				annotation := fmt.Sprintf("%s.container.imageshift.dev/original", pod.Spec.Containers[i].Name)
-				originalImage := pod.Spec.Containers[i].Image
-				pod.Annotations[annotation] = originalImage
+				pod.Annotations[annotation] = pod.Spec.Containers[i].Image
 
 				pod.Spec.Containers[i].Image = img
 
-				podlog.Info("Patched Container", "container", container.Name, "reference", img, "originalImage", originalImage, "annotationKey", annotation)
+				podlog.Info("Patched Container", "container", container.Name, "image", img)
 			}
 		}
 	} else {
