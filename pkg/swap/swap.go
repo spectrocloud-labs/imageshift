@@ -42,20 +42,32 @@ func getCompiledRegex(expression string) (*regexp.Regexp, error) {
 	return re, nil
 }
 
+// normalizeRegistry returns the canonical registry name using go-containerregistry
+func normalizeRegistry(registry string) string {
+	// Parse a dummy image with the registry to get the canonical form
+	ref, err := name.ParseReference(registry + "/dummy:latest")
+	if err != nil {
+		return registry
+	}
+	return ref.Context().RegistryStr()
+}
+
 func SwapImage(config imageshiftv1.Imageshift, image string) string {
 	ref, _ := name.ParseReference(image, name.WithDefaultRegistry(config.Spec.Default))
 
 	registry := ref.Context().RegistryStr()
+	normalizedDefault := normalizeRegistry(config.Spec.Default)
 
 	// if registry == default registry return image
 	var newImage string
 
-	if registry == config.Spec.Default {
+	if registry == normalizedDefault {
 		newImage = ref.Name()
 	}
 
 	for _, swap := range config.Spec.Mappings.Swap {
-		if swap.Registry == registry {
+		normalizedSwapRegistry := normalizeRegistry(swap.Registry)
+		if normalizedSwapRegistry == registry {
 			identifier := ref.Identifier()
 			switch len(strings.Split(identifier, ":")) {
 			case 1:

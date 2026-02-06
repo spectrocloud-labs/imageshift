@@ -17,10 +17,10 @@ rules:
   resources:
   - pods
   verbs:
+  - delete
   - get
   - list
   - watch
-  - delete
 - apiGroups:
   - imageshift.dev
   resources:
